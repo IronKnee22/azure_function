@@ -1,0 +1,15 @@
+﻿<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+
+         <div class="flex items-center justify-center h-screen" role="alert">Hledaná stránka neexistuje, použij HOME pro návrat na hlavní stránku</div>
+         
+
+        </LayoutView>
+    </NotFound>
+</Router>

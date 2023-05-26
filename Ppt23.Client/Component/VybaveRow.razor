@@ -1,0 +1,115 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+
+@if (Vyb is null)
+{
+            <div class="absolute right-1/2 bottom-1/2  transform translate-x-1/2 translate-y-1/2 ">
+                <div class=" border-t-transparent border-solid animate-spin  rounded-full border-cyan-600 border-8 h-16 w-16"></div>
+            </div>
+    return;
+}
+
+<div class="grid grid-cols-6 @((Vyb.IsRevisionNeed) ? "bg-red-400 hover:bg-red-400" : "")">
+
+    @if (Vyb != null && !IsInEditMode)
+    {
+            <div>@Vyb.Name</div>
+            <div>@Vyb.BuyDate.ToString("dd/MM/yyyy")</div>
+            <div>@Vyb.LastRevision.ToString("dd/MM/yyyy")</div>
+            <div>@((Vyb.IsRevisionNeed) ? "ano" : "ne")</div>
+            <div>@Vyb.Cena Kč</div>
+
+            <div class="text-center">
+                <button class="rounded bg-red-600 p-2" @onclick="() => SmazEventCallback.InvokeAsync()">🚮</button>
+                <button class="rounded bg-blue-600 p-2" @onclick="() => RevizeEventCallBack.InvokeAsync()">👨‍🔧</button>
+                <button class="rounded border-2 border-yellow-600 p-2" @onclick="() => TurnOnEdit()">🛠</button>
+                <a class="rounded border-2 border-blue-600 p-2" href="vybaveni/{@Vyb.Id}">ℹ️</a>
+                <button class="rounded border-2 border-green-600 p-2" @onclick="() => PouzitCallback.InvokeAsync()">Použít</button>
+
+            </div>
+    }
+    else if (editingItem != null && IsInEditMode)
+    {
+                <EditForm class="col-span-6" Model=editingItem OnValidSubmit="() => TurnOffEdit(true)">
+                <DataAnnotationsValidator />
+                    <div class="grid grid-cols-6 my-1">
+                    <div><InputText class="bg-green-100 border rounded" @bind-Value=@editingItem.Name /><ValidationMessage For="() => editingItem.Name" /></div>
+                    <div><InputDate class="bg-blue-100 border rounded" @bind-Value=@editingItem.BuyDate /></div>
+                        <div><InputDate class="bg-blue-100 border rounded" @bind-Value=@editingItem.LastRevision /><ValidationMessage For="() => editingItem.LastRevision" /></div>
+                    <div>@((editingItem.IsRevisionNeed) ? "ano" : "ne")</div>
+                    <div><InputNumber class="bg-orange-100 border rounded" @bind-Value=@editingItem.Cena ParsingErrorMessage="Pole Cena musí něco obsahovat" /><ValidationMessage For="() => editingItem.Cena" /></div>
+
+                @if (ChildContent == null)
+                {
+                        <div class="text-center">      
+                            <button type="submit" class="rounded border-2 border-blue-400 p-2" >💾</button>
+                            <button type="button" class="rounded border-2 border-blue-400 p-2" @onclick="() => IsInEditMode = false">❌</button>
+                        </div>        
+                }
+                else
+                {
+                    @ChildContent
+                }
+                </div>
+            </EditForm>
+    }
+</div>
+
+@code {
+
+    private DateTime randomDate;
+
+    private void SetRandomDate()
+    {
+        randomDate = VybaveniVM.RandomDate(editingItem.BuyDate);
+    }
+
+    [Parameter] public EventCallback SmazEventCallback { get; set; }
+    [Parameter] public EventCallback RevizeEventCallBack { get; set; }
+    [Parameter] public EventCallback EditDoneCallback { get; set; }
+    [Parameter] public EventCallback PouzitCallback { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public bool IsInEditMode { get; set; } = false;
+
+    VybaveniVM? _Vyb;
+    VybaveniVM? editingItem;
+
+    [Parameter]
+    public VybaveniVM? Vyb
+    {
+        get => _Vyb;
+        set
+        {
+            _Vyb = value;
+            if (value != null && IsInEditMode)
+            {
+                TurnOnEdit();
+            }
+        }
+    }
+
+    private void TurnOnEdit()
+    {
+        if (Vyb != null)
+        {
+            IsInEditMode = true;
+            editingItem = Vyb.Copy();
+            SetRandomDate();
+            editingItem.LastRevision = randomDate;
+
+        }
+    }
+
+    private void TurnOffEdit(bool success)
+    {
+        if (success)
+        {
+            editingItem?.MapTo(Vyb);
+        }
+        if (Vyb is not null)
+            IsInEditMode = false;
+        editingItem = null;
+        EditDoneCallback.InvokeAsync(success);
+    }
+}

@@ -1,0 +1,64 @@
+﻿@page "/HadaciHra"
+
+<div class="text-center">
+<div class="font-bold text-xl">Ahoj vítej v mojí hře</div>
+<div>Hadej číslo co si myslím</div>
+
+
+<input @bind-value="tip" @bind-value:event="oninput" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg "/>
+
+
+
+
+    <button @onclick="Hadam" class="bg-cyan-400 rounded-full px-5 ">
+    Tipnout
+</button>
+@*<p>
+<span >@nahodneCislo</span>
+
+</p>*@
+
+<p>
+
+    <span>@vysledek</span>
+</p>
+</div>
+
+@code
+{
+
+    int nahodneCislo;
+    string? tip;
+    string? vysledek;
+    bool noveCislo = true;
+
+
+    void Hadam()
+    {
+        if (noveCislo)
+        {
+            Random random = new Random();
+            nahodneCislo = random.Next(1, 10);
+            noveCislo = false;
+        }
+
+        bool cislo = int.TryParse(tip, out int hadaneCislo);
+
+        if (cislo)
+        {
+            string VetsiMensi = hadaneCislo > nahodneCislo ? "větší" : "menší";
+
+            vysledek = $"Tvoje číslo je {VetsiMensi}";
+
+            if (hadaneCislo == nahodneCislo)
+            {
+                vysledek = "Vyhrál jsi";
+                noveCislo = true;
+            }
+        }
+        else
+        {
+            vysledek = "Zkus zadat číslo";
+        }
+    }
+}

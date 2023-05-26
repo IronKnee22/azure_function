@@ -1,0 +1,111 @@
+﻿@page "/VybaveniNemocnice"
+@using Ppt.Shared;
+@inject HttpClient Http
+
+
+
+
+@if (SeznamVybaveni is null)
+{
+        <div class="absolute right-1/2 bottom-1/2  transform translate-x-1/2 translate-y-1/2 ">
+            <div class=" border-t-transparent border-solid animate-spin  rounded-full border-cyan-600 border-8 h-16 w-16"></div>
+        </div>
+    return;
+}
+else{
+    <div> pocet vybaveni @SeznamVybaveni.Count</div>
+    
+    <button @onclick="() => {isInNewMode = true; newModel = new();}" class=" text-white bg-gradient-to-b from-cyan-300 to-sky-800 px-5 rounded-full">Nové vybavení</button>
+    
+    <div class="grid grid-cols-6 border-b-2 border-black ">
+        <div class=" w-full h-full">Název</div>
+        <div class=" w-full h-full">Datum nákupu</div>
+        <div class=" w-full h-full">Datum poslední revize</div>
+        <div class=" w-full h-full">Potřebuje revizi?</div>
+        <div class=" w-full h-full">Cena</div>
+    </div>
+    
+    @if (isInNewMode)
+    {
+        ArgumentNullException.ThrowIfNull(newModel);
+                <VybaveRow IsInEditMode=true Vyb="newModel"
+                    EditDoneCallback="() => novaVybava(newModel)"> 
+    
+                    <div class="grid grid-cols-2 p-1">
+                        <button type="submit" class=" text-white bg-gradient-to-b from-cyan-300 to-sky-800 px-5 rounded-full">Přidat</button>
+                        <button type="button" @onclick="() => isInNewMode = false" class=" text-white bg-gradient-to-b from-cyan-300 to-sky-800 px-5 rounded-full">Odebrat</button>
+                    </div>
+                </VybaveRow>
+    }
+    
+    @foreach (var vyb in SeznamVybaveni)
+    {
+            <VybaveRow  IsInEditMode=false Vyb="vyb"
+                SmazEventCallback="() => DeleteVybaveni(vyb)"
+                RevizeEventCallBack="async () => {vyb.LastRevision = DateTime.Now; await PutVybaveni(vyb);}"
+                EditDoneCallback="async () => await PutVybaveni(vyb)"
+                PouzitCallback="async () => await PostUkon(vyb)">
+            </VybaveRow>
+    }
+}
+
+@code {
+    List<VybaveniVM>? SeznamVybaveni;
+    VybaveniVM? newModel;
+    UkonyVM ukonyVM;
+    bool isInNewMode;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+        SeznamVybaveni = await Http.GetFromJsonAsync<List<VybaveniVM>>("/vybaveni");
+    }
+
+    public async Task PostUkon(VybaveniVM vyb)
+    {
+        var id = vyb.Id;
+        ukonyVM = new UkonyVM
+        {
+            Name  = VybaveniVM.RandomName(),
+            RxecutionDate = DateTime.Now
+        };
+        var response = await Http.PostAsJsonAsync<UkonyVM>($"vybaveniUkon/{id}",ukonyVM); 
+    }
+
+    public async Task DeleteVybaveni(VybaveniVM vyb)
+    {
+        var odpoved = await Http.DeleteAsync($"vybaveni/{vyb.Id}");
+        if (odpoved.IsSuccessStatusCode && SeznamVybaveni != null)
+            SeznamVybaveni.Remove(vyb);
+    }
+
+    public async Task PutVybaveni(VybaveniVM? vyb)
+    {
+        if (vyb != null)
+        {
+            var response = await Http.PutAsJsonAsync($"vybaveni/{vyb.Id}", vyb); 
+        }
+
+    }
+
+    public async Task novaVybava(VybaveniVM newEquipment)
+    {
+
+        var response = await Http.PostAsJsonAsync<VybaveniVM>("vybaveni", newEquipment);
+
+        if(SeznamVybaveni != null)
+        {
+            SeznamVybaveni = await Http.GetFromJsonAsync<List<VybaveniVM>>("/vybaveni");
+            isInNewMode = false;
+            
+        }
+    }
+
+    
+
+    
+
+    
+
+}

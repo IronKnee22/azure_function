@@ -1,0 +1,35 @@
+﻿@page "/revize"
+@using Ppt.Shared;
+@inject HttpClient Http
+
+<h3 class="text-green-500">@Pozdrav</h3>
+
+@if (seznamRevizi is not null)
+{
+    <div class="grid grid-cols-4">
+
+        @foreach (var rev in seznamRevizi)
+        {
+                <div>Id revize: @rev.Id  </div>
+                <div>Nazev: @rev.Name</div>
+                <div>Posledni revize: @rev.DateTime.ToShortDateString()</div>
+                <div>Id Vybaveni: @rev.VybaveniId </div>
+
+        }
+    </div>
+}else{
+    <div>Nic tu není</div>
+}
+@code {
+
+    [Parameter] public string Pozdrav { get; set; } = "";
+    string input = "";
+    List<RevizeVM>? seznamRevizi;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        seznamRevizi = await Http.GetFromJsonAsync<List<RevizeVM>>($"revize");
+    }
+
+}
